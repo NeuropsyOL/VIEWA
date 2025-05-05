@@ -1,0 +1,58 @@
+# Gradle
+.gradle/
+build/
+
+# Local configuration file (SDK path, etc)
+local.properties
+
+# Log files
+*.log
+
+# Android Studio / IntelliJ
+/.idea/
+/*.iml
+/.idea_modules/
+/.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+.idea/libraries
+.navigation/
+
+# Kotlin build
+*.kotlin_module
+
+# ProGuard
+proguard/
+*.pro
+
+# NDK
+obj/
+*.apk
+*.so
+
+# Android generated files
+generated/
+captures/
+.externalNativeBuild/
+
+# Google Services (e.g. API keys)
+google-services.json
+
+# Android Jetpack Compose
+.metadata/
+
+# Miscellaneous
+*.swp
+*~.nib
+*.class
+*.jar
+*.war
+*.ear
+*.db
+*.lock
+*.keystore
+.DS_Store
+Thumbs.db
+.cxx

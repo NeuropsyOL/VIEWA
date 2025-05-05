@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+include ':app'
+
+// Add a project stub for liblsl-Java
+include 'liblsl-Java'
+project(':liblsl-Java').projectDir = new File('./liblsl-Java')

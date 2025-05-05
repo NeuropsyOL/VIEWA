@@ -1,0 +1,10 @@
+<resources>
+    <!-- Base application theme -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your colors and attributes here -->
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryDark">#303F9F</item>
+        <item name="colorAccent">#FF4081</item>
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
+    </style>
+</resources>
