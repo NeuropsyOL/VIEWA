@@ -15,6 +15,7 @@ import de.uol.viewa.LSLService
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.sample
 
 
 class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
@@ -25,12 +26,17 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = (binder as LSLService.LocalBinder).service()
-            // 1) Start all inlets:
+
             val streams = arguments!!.getStringArray("selectedStreams")!!.toList()
+            // Tell VM to collect data and update ui state
+            viewModel.startCollecting(streams, service!!.dataFlow)
+            // Start all inlets
             streams.forEach { Log.i("LivePlotFragment","Starting inlet $it")
-                service!!.startInlet(it) }
-            // 2) Tell VM to collect & buffer them
-            viewModel.startCollecting(streams, service!!.dataFlow, service!!.configFlow)
+                service!!.startInlet(it)
+            }
+            // The order is very important here: If we start the inlets before the VM is ready to
+            // collect, the configuration events sent by the service can be lost
+
         }
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
@@ -49,6 +55,10 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
 
     override fun onStop() {
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         // stop everything
         viewModel.stopCollecting()
         service?.stopAll()
@@ -71,9 +81,10 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
             }
         }
 
-        // 2) When *any* chartData updates, ask the adapter to re-bind visible ViewHolders:
+        // 2) When *any* chartData updates, ask the adapter to re-bind visible ViewHolders
+        //    Use sample() to throttle to 60 FPS
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.uiState.collect { _ ->
+            viewModel.uiState.sample(16).collect { _ ->
                 adapter.notifyDataSetChanged()
             }
         }

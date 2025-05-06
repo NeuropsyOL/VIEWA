@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 
@@ -25,11 +26,11 @@ class LSLService : LifecycleService() {
         data class StreamConfig(val streamName:String,val channelCount:Int) : ServiceEvent()
     }
 
+    // This SharedFlow handles all data flow from the service to the view model.
+    // Whenever a new inlet is opened, a StreamConfig is emitted to the flow which contains all
+    // information needed to set up a live chart
     private val _dataFlow = MutableSharedFlow<ServiceEvent>(extraBufferCapacity = 100, replay=0)
     val dataFlow: SharedFlow<ServiceEvent> = _dataFlow
-
-    private val _configFlow = MutableStateFlow<Map<String,Int>>(emptyMap())
-    val configFlow: StateFlow<Map<String,Int>> = _configFlow
 
     private val inletJobs = mutableMapOf<String, Job>()
 
@@ -38,6 +39,11 @@ class LSLService : LifecycleService() {
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)    // important for LifecycleService
         return localBinder      // return your binder here
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        stopAll()
+        return super.onUnbind(intent)
     }
 
     override fun onCreate() {
@@ -50,29 +56,30 @@ class LSLService : LifecycleService() {
         val inlet = LSL.StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
             Log.i("LSLService","Emitting config for ${info.name()}")
-            _configFlow.value=_configFlow.value+(streamName to info.channel_count())
+            _dataFlow.emit(ServiceEvent.StreamConfig(info.name(),info.channel_count()))
             val buf = FloatArray(info.channel_count())
             while (isActive) {
-                val timestamp = inlet.pull_sample(buf, LSL.FOREVER)
-                _dataFlow.emit(ServiceEvent.DataSample(streamName, timestamp, buf.copyOf()))
+                val timestamp = inlet.pull_sample(buf, 1.0)
+                if(timestamp>0)
+                    _dataFlow.tryEmit(ServiceEvent.DataSample(streamName, timestamp, buf.copyOf()))
             }
         }
         inletJobs[streamName] = job
+
     }
 
     fun stopInlet(streamName: String) {
-        _configFlow.value =
-            _configFlow.value - streamName
-        inletJobs.remove(streamName)?.also { job->job.cancel() }
+        inletJobs[streamName]?.cancel()
+        inletJobs.remove(streamName)
     }
 
-    fun stopAll(){
-        //inletJobs.forEach {stopInlet(it.key)
-        //    Log.e("LSLService",it.key)}
+    fun stopAll() {
+        inletJobs.values.forEach { job -> job.cancel() }
+        inletJobs.clear()
     }
 
-    // Binder to return the Flow:
-    inner class LocalBinder : Binder() {
-        fun service(): LSLService = this@LSLService
+        // Binder to return the Flow:
+        inner class LocalBinder : Binder() {
+            fun service(): LSLService = this@LSLService
+        }
     }
-}

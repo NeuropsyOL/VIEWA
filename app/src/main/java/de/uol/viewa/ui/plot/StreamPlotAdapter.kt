@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.LineData
 import de.uol.neuropsy.viewa.databinding.ItemStreamPlotBinding
 
@@ -37,7 +38,7 @@ class StreamPlotAdapter(
 
         // 2) Fetch the latest DataSets for this stream
         val dataSets = viewModel.uiState.value[streamName]?.entries?: emptyList()
-
+        binding.streamChart.description=Description().apply {isEnabled=false}
         // 3) Apply to the chart
         binding.streamChart.apply {
             data = LineData(*dataSets.toTypedArray())
