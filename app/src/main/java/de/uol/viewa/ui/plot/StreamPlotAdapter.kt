@@ -33,13 +33,14 @@ class StreamPlotAdapter(
         val streamName = getItem(position)
         val binding = holder.binding
 
-        // 1) Title
+        // Set the text of the title TV
         binding.streamTitle.text = streamName
 
-        // 2) Fetch the latest DataSets for this stream
+        // Fetch the latest DataSets for this stream
         val dataSets = viewModel.uiState.value[streamName]?.entries?: emptyList()
         binding.streamChart.description=Description().apply {isEnabled=false}
-        // 3) Apply to the chart
+
+        // Apply to the chart
         binding.streamChart.apply {
             data = LineData(*dataSets.toTypedArray())
             notifyDataSetChanged()

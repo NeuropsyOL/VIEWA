@@ -51,6 +51,7 @@ class StreamSelectionFragment : Fragment(R.layout.fragment_selection) {
             viewModel.refreshAvailableStreams()
         }
 
+
         // Start Recording button navigates to LivePlotFragment
         startBtn.setOnClickListener {
             val selected = viewModel.selectedStreams.value
