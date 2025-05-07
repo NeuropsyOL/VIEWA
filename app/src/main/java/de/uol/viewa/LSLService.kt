@@ -23,7 +23,7 @@ class LSLService : LifecycleService() {
 
     sealed class ServiceEvent {
         data class DataSample(val streamName: String,val timestamp:Double, val sample: FloatArray) : ServiceEvent()
-        data class StreamConfig(val streamName:String,val channelCount:Int) : ServiceEvent()
+        data class StreamConfig(val streamName:String,val channelCount:Int, val samplingRate : Double) : ServiceEvent()
     }
 
     // This SharedFlow handles all data flow from the service to the view model.
@@ -56,12 +56,11 @@ class LSLService : LifecycleService() {
         val inlet = LSL.StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
             Log.i("LSLService","Emitting config for ${info.name()}")
-            _dataFlow.emit(ServiceEvent.StreamConfig(info.name(),info.channel_count()))
+            _dataFlow.emit(ServiceEvent.StreamConfig(info.name(),info.channel_count(), info.nominal_srate()))
             val buf = FloatArray(info.channel_count())
             while (isActive) {
-                val timestamp = inlet.pull_sample(buf, 1.0)
-                if(timestamp>0)
-                    _dataFlow.tryEmit(ServiceEvent.DataSample(streamName, timestamp, buf.copyOf()))
+                val timestamp = inlet.pull_sample(buf, LSL.FOREVER)
+                _dataFlow.tryEmit(ServiceEvent.DataSample(streamName, timestamp, buf.copyOf()))
             }
         }
         inletJobs[streamName] = job
@@ -78,8 +77,8 @@ class LSLService : LifecycleService() {
         inletJobs.clear()
     }
 
-        // Binder to return the Flow:
-        inner class LocalBinder : Binder() {
-            fun service(): LSLService = this@LSLService
-        }
+    // Binder to return the Flow:
+    inner class LocalBinder : Binder() {
+        fun service(): LSLService = this@LSLService
     }
+}

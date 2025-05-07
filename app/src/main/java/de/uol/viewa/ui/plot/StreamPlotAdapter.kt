@@ -32,17 +32,18 @@ class StreamPlotAdapter(
     override fun onBindViewHolder(holder: PlotVH, position: Int) {
         val streamName = getItem(position)
         val binding = holder.binding
-
         // Set the text of the title TV
         binding.streamTitle.text = streamName
-
         // Fetch the latest DataSets for this stream
         val dataSets = viewModel.uiState.value[streamName]?.entries?: emptyList()
         binding.streamChart.description=Description().apply {isEnabled=false}
+        binding.streamChart.axisRight.isEnabled=false
 
         // Apply to the chart
         binding.streamChart.apply {
             data = LineData(*dataSets.toTypedArray())
+            viewModel.uiState.value[streamName]?.yMax?.let { axisLeft.axisMaximum=it }
+            viewModel.uiState.value[streamName]?.yMin?.let { axisLeft.axisMinimum=it }
             notifyDataSetChanged()
             invalidate()
         }
