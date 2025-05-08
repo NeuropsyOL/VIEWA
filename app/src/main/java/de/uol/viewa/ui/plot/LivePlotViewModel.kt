@@ -31,6 +31,7 @@ data class ChartUiState(
 class LivePlotViewModel : ViewModel() {
 
     private val maxPoints = 500
+    val bufferSizeInSeconds = 10.0
     private var pausePlotting = false
     private var allTimeMin = mutableMapOf<String, Float>()
     private var allTimeMax = mutableMapOf<String, Float>()
@@ -74,7 +75,7 @@ class LivePlotViewModel : ViewModel() {
             buf.addLast(Entry(t, ys[i]))
             // Remove every entry older than 5 seconds
             // TODO make the timeout configurable
-            buf.removeIf { t -> buf.last().x - t.x > 5 }
+            buf.removeIf { t -> buf.last().x - t.x > bufferSizeInSeconds }
         }
 
         // Compute this stream's current min/max
@@ -112,7 +113,7 @@ class LivePlotViewModel : ViewModel() {
         val channelCount = configEvent.channelCount!!
         val streamName = configEvent.streamName
         val bufferSize =
-            if (configEvent.samplingRate == LSL.IRREGULAR_RATE) maxPoints else (5 * configEvent.samplingRate + 1).toInt()
+            if (configEvent.samplingRate == LSL.IRREGULAR_RATE) maxPoints else (bufferSizeInSeconds * configEvent.samplingRate + 1).toInt()
         buffers[streamName] = (0 until channelCount)
             .associateWith { ArrayDeque<Entry>(bufferSize) }
             .toMutableMap()
