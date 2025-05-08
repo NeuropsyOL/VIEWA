@@ -1,5 +1,6 @@
 package de.uol.viewa
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -13,17 +14,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // 1) Find the toolbar
+        // Find the toolbar
         val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
-        // 2) Set it as the support ActionBar
+        // Set it as the support ActionBar
         setSupportActionBar(toolbar)
 
-        // 3) Hook it up with NavController so titles update automatically
+        // Hook it up with NavController so titles update automatically
         val navHost =
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
                     as NavHostFragment
         val navController = navHost.navController
         setupActionBarWithNavController(navController)
+
+        startService(Intent(this, LSLService::class.java))
     }
 
     // 4) Enable the Up button

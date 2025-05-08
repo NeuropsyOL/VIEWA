@@ -42,8 +42,13 @@ class LSLService : LifecycleService() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        stopAll()
         return super.onUnbind(intent)
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopAll()
+        stopSelf()
     }
 
     fun startInlet(streamName : String){
