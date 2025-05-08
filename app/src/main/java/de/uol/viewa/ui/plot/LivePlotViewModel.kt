@@ -1,6 +1,4 @@
 package de.uol.viewa.ui.plot
-
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
@@ -12,7 +10,6 @@ import edu.ucsd.sccn.LSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
@@ -42,24 +39,21 @@ class LivePlotViewModel : ViewModel() {
         MutableStateFlow<Map<String, ChartUiState>>(emptyMap())
     val uiState: StateFlow<Map<String, ChartUiState>> = _uiState.asStateFlow()
 
-    /* Collects all config events and new samples, sends the new LineData to the UI
-     *(i.e. the StreamPlotAdapter)
-     * */
-    fun startCollecting(streams: List<String>, dataFlow: SharedFlow<LSLService.ServiceEvent>) {
-        // Cancel any previous collection
-        job?.cancel()
-        buffers.clear()
-        allTimeMin.clear()
-        allTimeMax.clear()
+    private var service: LSLService? = null
+    private var activeStreams : Set<String> = emptySet()
 
-        job = viewModelScope.launch(Dispatchers.Default) {
-            dataFlow.filterIsInstance<LSLService.ServiceEvent>()
-                .collect { ev ->
-                    when (ev) {
-                        is LSLService.ServiceEvent.StreamConfig -> handleConfigurationEvent(ev)
-                        is LSLService.ServiceEvent.DataSample -> handleDataEvent(ev)
+    fun bindService(lslservice : LSLService) {
+        service = lslservice
+        if (job == null) {
+            job = viewModelScope.launch(Dispatchers.Default) {
+                service!!.dataFlow.filterIsInstance<LSLService.ServiceEvent>()
+                    .collect { ev ->
+                        when (ev) {
+                            is LSLService.ServiceEvent.StreamConfig -> handleConfigurationEvent(ev)
+                            is LSLService.ServiceEvent.DataSample -> handleDataEvent(ev)
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -69,7 +63,6 @@ class LivePlotViewModel : ViewModel() {
         val ys = sampleEv.sample
         val chBufs = buffers[name]
             ?: return       // If this stream is not yet configured, drop the sample
-
 
         // add each channel’s new Entry
         chBufs.forEach { (i, buf) ->
@@ -111,7 +104,7 @@ class LivePlotViewModel : ViewModel() {
     }
 
     private fun handleConfigurationEvent(configEvent: LSLService.ServiceEvent.StreamConfig) {
-        val channelCount = configEvent.channelCount!!
+        val channelCount = configEvent.channelCount
         val streamName = configEvent.streamName
         val bufferSize =
             if (configEvent.samplingRate == LSL.IRREGULAR_RATE) maxPoints else (bufferSizeInSeconds * configEvent.samplingRate + 1).toInt()
@@ -122,14 +115,20 @@ class LivePlotViewModel : ViewModel() {
         allTimeMax[streamName] = Float.NEGATIVE_INFINITY
     }
 
-    fun stopCollecting() {
-        _uiState.value = emptyMap()
+    fun updateSelection(newStreams: Set<String>) {
+        val toStart = newStreams - activeStreams
+        val toStop  = activeStreams - newStreams
+        viewModelScope.launch {
+            // serialized on the same coroutine context,
+            // so no two diffs run in parallel
+            toStop.forEach  { service?.stopInlet(it) }
+            toStart.forEach { service?.startInlet(it) }
+            activeStreams = newStreams
+        }
     }
 
-    fun resetRange() {
-        // reset to some sensible defaults, e.g. ±1
-        val defaultMin = Float.POSITIVE_INFINITY
-        val defaultMax = Float.NEGATIVE_INFINITY
-        //_uiState.value = _uiState.value.copy(yMin = defaultMin, yMax = defaultMax)
+    override fun onCleared() {
+        super.onCleared()
+        job?.cancel()
     }
 }

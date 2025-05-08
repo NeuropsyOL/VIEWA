@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -28,17 +27,8 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = (binder as LSLService.LocalBinder).service()
-
-            val streams = arguments!!.getStringArray("selectedStreams")!!.toList()
-            // Tell VM to collect data and update ui state
-            viewModel.startCollecting(streams, service!!.dataFlow)
-            // Start all inlets
-            streams.forEach { Log.i("LivePlotFragment","Starting inlet $it")
-                service!!.startInlet(it)
-            }
-            // The order is very important here: If we start the inlets before the VM is ready to
-            // collect, the configuration events sent by the service can be lost
-
+            viewModel.bindService(service!!)
+            viewModel.updateSelection(arguments!!.getStringArray("selectedStreams")!!.toSet())
         }
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
@@ -47,12 +37,16 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
 
     override fun onStart() {
         super.onStart()
-        Log.i("LivePlotFragment","onStart")
         requireActivity().bindService(
             Intent(requireContext(), LSLService::class.java),
             connection,
             Context.BIND_AUTO_CREATE
         )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        requireActivity().unbindService(connection)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -63,7 +57,7 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
         recycler.adapter = adapter
         // Observe chart data map
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.uiState.collect { map ->
+            viewModel.uiState.collect { _ ->
                 // adapter’s list is the stream names in the original order
                 val streams = requireArguments().getStringArray("selectedStreams")!!.toList()
                 adapter.submitList(streams)
