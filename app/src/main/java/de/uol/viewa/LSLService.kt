@@ -46,10 +46,6 @@ class LSLService : LifecycleService() {
         return super.onUnbind(intent)
     }
 
-    override fun onCreate() {
-        super.onCreate()
-    }
-
     fun startInlet(streamName : String){
         if (inletJobs.containsKey(streamName)) return
         val info = LSL.resolve_stream("name", streamName).firstOrNull() ?: return

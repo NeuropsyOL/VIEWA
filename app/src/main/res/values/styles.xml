@@ -7,4 +7,12 @@
         <item name="colorAccent">#FF4081</item>
         <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
     </style>
+    <style name="FullScreenDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="windowFixedWidthMajor">70%</item>
+        <item name="windowFixedWidthMinor">70%</item>
+        <item name="windowFixedHeightMajor">90%</item>
+        <item name="windowFixedHeightMinor">70%</item>
+    </style>
 </resources>

@@ -7,19 +7,21 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
-import androidx.fragment.app.Fragment
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import de.uol.neuropsy.viewa.R
-import de.uol.viewa.LSLService
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import de.uol.neuropsy.viewa.R
+import de.uol.viewa.LSLService
 import kotlinx.coroutines.flow.sample
 
 
 class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
-    private val viewModel: LivePlotViewModel by viewModels({ requireActivity() })
+    private val viewModel: LivePlotViewModel by activityViewModels()
     private lateinit var adapter: StreamPlotAdapter
     private var service: LSLService? = null
 
@@ -53,25 +55,12 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
         )
     }
 
-    override fun onStop() {
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // stop everything
-        viewModel.stopCollecting()
-        service?.stopAll()
-        requireActivity().unbindService(connection)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val recycler = view.findViewById<RecyclerView>(R.id.plotsRecycler)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = StreamPlotAdapter(viewModel)
         recycler.adapter = adapter
-
         // Observe chart data map
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.uiState.collect { map ->
@@ -81,13 +70,53 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
             }
         }
 
-        // 2) When *any* chartData updates, ask the adapter to re-bind visible ViewHolders
-        //    Use sample() to throttle to 60 FPS
+        // When *any* chartData updates, ask the adapter to re-bind visible ViewHolders
+        // Use sample() to throttle to 60 FPS
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.uiState.sample(16).collect { _ ->
                 adapter.notifyDataSetChanged()
             }
         }
+        val tapDetector = GestureDetector(requireContext(),
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onSingleTapUp(e: MotionEvent): Boolean {
+                    // Returning true means “I’ve recognized the tap”
+                    return true
+                }
+            }
+        )
 
+        // Using MPAndroidChart's gesture handlers is janky, in order to open
+        // the fullscreen popup on touch, we need to intercept all gestures on the
+        // fragment.
+        recycler.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                // Feed every event to the detector
+                if (tapDetector.onTouchEvent(e)) {
+                    // It was a tap, find which child was tapped:
+                    val child = rv.findChildViewUnder(e.x, e.y)
+                    if (child != null) {
+                        val pos = rv.getChildAdapterPosition(child)
+                        if (pos != RecyclerView.NO_POSITION) {
+                            val streamName = adapter.currentList[pos]
+                            FullScreenPlotDialogFragment.show(
+                                childFragmentManager,
+                                streamName
+                            )
+                        }
+                    }
+                }
+                // Return false so normal RecyclerView scrolling still works
+                return false
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                // No-op
+            }
+
+            override fun onRequestDisallowInterceptTouchEvent(disallow: Boolean) {
+                // No-op
+            }
+        })
     }
 }
