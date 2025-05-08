@@ -1,6 +1,7 @@
 package de.uol.viewa.ui.selection
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -48,6 +49,7 @@ class StreamSelectionFragment : Fragment(R.layout.fragment_selection) {
 
         // Pull-to-refresh triggers discovery
         swipe.setOnRefreshListener {
+            swipe.isRefreshing=true
             viewModel.refreshAvailableStreams()
         }
 
@@ -55,10 +57,10 @@ class StreamSelectionFragment : Fragment(R.layout.fragment_selection) {
         // Start Recording button navigates to LivePlotFragment
         startBtn.setOnClickListener {
             val selected = viewModel.selectedStreams.value
-                .orEmpty()
             val args = bundleOf(
                 "selectedStreams" to selected.toTypedArray()
             )
+            Log.e("StreamSelectionFragment", "$selected")
             findNavController().navigate(
                 R.id.action_selection_to_live,
                 args
