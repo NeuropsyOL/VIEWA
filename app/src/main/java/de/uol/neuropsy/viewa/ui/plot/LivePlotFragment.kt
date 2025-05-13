@@ -1,4 +1,4 @@
-package de.uol.viewa.ui.plot
+package de.uol.neuropsy.viewa.ui.plot
 
 import android.content.ComponentName
 import android.content.Context
@@ -6,16 +6,26 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.os.PowerManager
+import android.util.Log
 import android.view.GestureDetector
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.uol.neuropsy.viewa.R
-import de.uol.viewa.LSLService
+import de.uol.neuropsy.viewa.LSLService
+import de.uol.neuropsy.viewa.ui.selection.StreamSelectionFragment
+//import de.uol.neuropsy.viewa.ui.settings.SettingsDialog
 import kotlinx.coroutines.flow.sample
 
 
@@ -23,16 +33,22 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
     private val viewModel: LivePlotViewModel by activityViewModels()
     private lateinit var adapter: StreamPlotAdapter
     private var service: LSLService? = null
+    private lateinit var wakeLock : PowerManager.WakeLock
+
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             service = (binder as LSLService.LocalBinder).service()
             viewModel.bindService(service!!)
-            viewModel.updateSelection(arguments!!.getStringArray("selectedStreams")!!.toSet())
         }
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
         }
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        wakeLock=(context.getSystemService(Context.POWER_SERVICE) as PowerManager).run { newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"LivePlotFragment::Wakelock") }
     }
 
     override fun onStart() {
@@ -42,27 +58,22 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
             connection,
             Context.BIND_AUTO_CREATE
         )
+        wakeLock.acquire()
     }
 
     override fun onStop() {
         super.onStop()
         requireActivity().unbindService(connection)
+        wakeLock.release()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val recycler = view.findViewById<RecyclerView>(R.id.plotsRecycler)
+        var recycler = view.findViewById<RecyclerView>(R.id.plotsRecycler)
         recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = StreamPlotAdapter(viewModel)
         recycler.adapter = adapter
-        // Observe chart data map
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.uiState.collect { _ ->
-                // adapter’s list is the stream names in the original order
-                val streams = requireArguments().getStringArray("selectedStreams")!!.toList()
-                adapter.submitList(streams)
-            }
-        }
+        adapter.submitList(viewModel.activeStreams.toList())
 
         // When *any* chartData updates, ask the adapter to re-bind visible ViewHolders
         // Use sample() to throttle to 60 FPS
@@ -112,5 +123,37 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot) {
                 // No-op
             }
         })
+
+        childFragmentManager.setFragmentResultListener(
+            "streamSelection",     // requestKey
+            this                   // lifecycleOwner
+        ) { _, bundle ->
+            val selectedStreams = bundle.getStringArray("selectedStreams")!!.toSet()
+            adapter.submitList(selectedStreams!!.toSet().toList())
+            viewModel.updateSelection(selectedStreams!!.toSet())
+        }
+
+        // Add a MenuProvider
+        (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                // inflate the fragment-specific menu
+                menuInflater.inflate(R.menu.menu_live_plot, menu)
+            }
+
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                return when (item.itemId) {
+                    R.id.action_add_stream -> {
+                        StreamSelectionFragment().show(childFragmentManager, "StreamSelectionTag")
+                        true
+                    }
+                    R.id.action_settings -> {
+                        //SettingsDialog().show(childFragmentManager, "settings")
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 }

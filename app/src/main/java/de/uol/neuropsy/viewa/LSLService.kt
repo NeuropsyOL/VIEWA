@@ -1,12 +1,17 @@
-package de.uol.viewa
+package de.uol.neuropsy.viewa
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.MutableState
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import de.uol.neuropsy.viewa.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -66,7 +71,13 @@ class LSLService : LifecycleService() {
         val inlet = LSL.StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
             Log.i("LSLService","Emitting config for ${info.name()}")
-            _dataFlow.emit(ServiceEvent.StreamConfig(info.name(),info.channel_count(), info.nominal_srate()))
+            _dataFlow.emit(
+                ServiceEvent.StreamConfig(
+                    info.name(),
+                    info.channel_count(),
+                    info.nominal_srate()
+                )
+            )
             val buf = FloatArray(info.channel_count())
             try {
                 while (isActive) {

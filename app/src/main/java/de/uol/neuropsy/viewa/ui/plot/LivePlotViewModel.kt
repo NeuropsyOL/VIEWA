@@ -1,11 +1,11 @@
-package de.uol.viewa.ui.plot
+package de.uol.neuropsy.viewa.ui.plot
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
-import de.uol.viewa.LSLService
-import de.uol.viewa.ui.main.utils.ColorPalette
+import de.uol.neuropsy.viewa.LSLService
+import de.uol.neuropsy.viewa.ui.main.utils.ColorPalette
 import edu.ucsd.sccn.LSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,9 +38,16 @@ class LivePlotViewModel : ViewModel() {
     private val _uiState =
         MutableStateFlow<Map<String, ChartUiState>>(emptyMap())
     val uiState: StateFlow<Map<String, ChartUiState>> = _uiState.asStateFlow()
-
     private var service: LSLService? = null
-    private var activeStreams : Set<String> = emptySet()
+
+    // Set of the names of active streams currently plotted
+    // Unfortunately we need this set of extra bookkeeping as
+    // I think getting the list of the currently active streams from the
+    // LSLService might induce a race condition when whe change
+    // new active streams faster than the service can open new
+    // outlets, see also updateSelection()
+    var activeStreams : Set<String> = emptySet()
+
 
     fun bindService(lslservice : LSLService) {
         service = lslservice

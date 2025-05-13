@@ -1,5 +1,6 @@
-package de.uol.viewa.ui.selection
+package de.uol.neuropsy.viewa.ui.selection
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -16,13 +17,11 @@ class StreamListAdapter(
     private val onCheckChanged: (streamName: String, isChecked: Boolean) -> Unit
 ) : ListAdapter<StreamItem, StreamListAdapter.ViewHolder>(DIFF_CALLBACK) {
 
-    private var isRecording: Boolean = false
+    private var selectedStreams: Set<String> = emptySet()
 
-    /**
-     * Disable checkboxes while recording is active.
-     */
-    fun setRecording(recording: Boolean) {
-        isRecording = recording
+    fun setSelectedStreams(streams: Set<String>) {
+        selectedStreams = streams
+        Log.e("StreamListAdapter","Selected streams: $selectedStreams")
         notifyDataSetChanged()
     }
 
@@ -34,15 +33,16 @@ class StreamListAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), isRecording)
+        var item =getItem(position)
+        item.isChecked=selectedStreams.contains(item.name)
+        holder.bind(item,onCheckChanged)
     }
 
     inner class ViewHolder(private val checkBox: MaterialCheckBox) : RecyclerView.ViewHolder(checkBox) {
-        fun bind(item: StreamItem, recording: Boolean) {
+        fun bind(item: StreamItem, onCheckChanged: (streamName: String, isChecked: Boolean) -> Unit) {
             checkBox.text = item.name
             checkBox.setOnCheckedChangeListener(null)
             checkBox.isChecked = item.isChecked
-            checkBox.isEnabled = !recording
             checkBox.setOnCheckedChangeListener { _, checked ->
                 onCheckChanged(item.name, checked)
             }
@@ -64,5 +64,5 @@ class StreamListAdapter(
  */
 data class StreamItem(
     val name: String,
-    val isChecked: Boolean
+    var isChecked: Boolean
 )

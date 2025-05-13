@@ -1,10 +1,9 @@
-package de.uol.viewa.ui.plot
+package de.uol.neuropsy.viewa.ui.plot
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
@@ -16,9 +15,8 @@ import com.github.mikephil.charting.data.LineData
 import de.uol.neuropsy.viewa.R
 import kotlinx.coroutines.flow.mapNotNull
 
-class FullScreenPlotDialogFragment : DialogFragment(R.layout.dialog_fullscreen_plot) {
+class FullScreenPlotDialogFragment : DialogFragment(R.layout.fragment_fullscreen_plot) {
     private val viewModel: LivePlotViewModel by activityViewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL,R.style.AppTheme)
@@ -52,7 +50,7 @@ class FullScreenPlotDialogFragment : DialogFragment(R.layout.dialog_fullscreen_p
                     chart.invalidate()
                 }
         }
-        val closeBtn=v.findViewById<TextView>(R.id.plot_popup_close_button)
+        val closeBtn=v.findViewById<View>(R.id.plot_popup_close_button)
         closeBtn?.setOnClickListener{dismiss()}
     }
 

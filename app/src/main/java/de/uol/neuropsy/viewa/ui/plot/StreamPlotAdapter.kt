@@ -1,4 +1,4 @@
-package de.uol.viewa.ui.plot
+package de.uol.neuropsy.viewa.ui.plot
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

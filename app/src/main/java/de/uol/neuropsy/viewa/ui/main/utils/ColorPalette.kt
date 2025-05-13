@@ -1,4 +1,4 @@
-package de.uol.viewa.ui.main.utils
+package de.uol.neuropsy.viewa.ui.main.utils
 import android.graphics.Color
 import androidx.annotation.ColorInt
 /**

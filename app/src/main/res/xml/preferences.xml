@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="use_wakelock"
+        android:title="Use wakelock" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="use_multicast_ock"
+        android:title="Use multicast lock (drains battery, only activate if not all streams are found)" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="use_foreground_service"
+        android:title="Keep alive in background (drains battery)" />
+    <SeekBarPreference
+        android:defaultValue="10"
+        android:key="pref_buffer_length"
+        android:max="100"
+        android:min="1"
+        android:title="Buffer length"
+        app:showSeekBarValue="true" />
+        -->
+</PreferenceScreen>

@@ -1,4 +1,4 @@
-package de.uol.viewa.ui.plot
+package de.uol.neuropsy.viewa.ui.plot
 
 import android.view.MotionEvent
 import com.github.mikephil.charting.listener.ChartTouchListener

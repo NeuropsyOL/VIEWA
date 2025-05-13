@@ -1,4 +1,4 @@
-package de.uol.viewa.ui.theme
+package de.uol.neuropsy.viewa.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

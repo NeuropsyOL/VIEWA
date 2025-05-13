@@ -71,6 +71,10 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:2.5.3"
     implementation "androidx.navigation:navigation-ui-ktx:2.5.3"
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    //implementation 'androidx.preference:preference-ktx:1.2.1'
+    //implementation 'androidx.datastore:datastore-core-android:1.1.6'
+    //implementation 'androidx.datastore:datastore-preferences-core-android:1.1.6'
+    //implementation "androidx.datastore:datastore-preferences:1.0.0"
     // Optional: IDE tooling for Compose
     debugImplementation "androidx.compose.ui:ui-tooling:1.4.2"
 
