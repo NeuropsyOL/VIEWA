@@ -1,5 +1,5 @@
 # Viewa
-[![Android CI](https://github.com/NeuropsyOL/Viewa/actions/workflows/android-build.yml/badge.svg)](https://github.com/NeuropsyOL/Viewa/actions)
+[![Android Build](https://github.com/NeuropsyOL/VIEWA/actions/workflows/android_build.yml/badge.svg)](https://github.com/NeuropsyOL/VIEWA/actions/workflows/android_build.yml)
 [![GPL v3 License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](LICENSE)
 
 ## Overview
@@ -51,7 +51,7 @@ The app is actively developed by the neuropsychology group of [Stefan Debener](h
 * **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
 
 ## Acknowledgements
-[liblsl](https://github.com/sccn/liblsl), used under MIT license
-[liblsl-Java](https://github.com/labstreaminglayer/liblsl-Java), used under MIT license
-[MPAndroidChart](https://github.com/PhilJay/MPAndroidChart), Apache v2.0 license
+* [liblsl](https://github.com/sccn/liblsl), used under MIT license
+* [liblsl-Java](https://github.com/labstreaminglayer/liblsl-Java), used under MIT license
+* [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart), Apache v2.0 license
 
