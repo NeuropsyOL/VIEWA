@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Settings, must always be in the overflow. -->
+    <item android:id="@+id/action_close_fullscreen"
+        android:title="Settings"
+        android:icon="@drawable/close_fullscreen"
+        app:showAsAction="always"/>
+</menu>

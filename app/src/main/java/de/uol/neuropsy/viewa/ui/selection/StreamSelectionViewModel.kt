@@ -46,7 +46,8 @@ class StreamSelectionViewModel : ViewModel() {
             val items = infos.map { info ->
                 StreamItem(
                     name = info.name(),
-                    isChecked = _selectedStreams.value.contains(info.name())
+                    isChecked = _selectedStreams.value.contains(info.name()),
+                    subtitle = "${info.channel_count()} ch ${info.type()} @ ${if (info.nominal_srate()==LSL.IRREGULAR_RATE) "irregular rate" else info.nominal_srate()}"
                 )
             }
             withContext(Dispatchers.Main) {

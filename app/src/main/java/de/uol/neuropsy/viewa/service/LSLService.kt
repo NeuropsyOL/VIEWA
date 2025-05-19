@@ -1,37 +1,48 @@
-package de.uol.neuropsy.viewa
+package de.uol.neuropsy.viewa.service
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Intent
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.compose.runtime.MutableState
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import de.uol.neuropsy.viewa.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import edu.ucsd.sccn.LSL
 import edu.ucsd.sccn.LSL.StreamInlet
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import java.lang.Exception
 
 class LSLService : LifecycleService() {
 
-    val timeoutMs = 500.0    // half-second
+    private val timeoutMs = 500.0    // half-second
 
     sealed class ServiceEvent {
-        data class DataSample(val streamName: String,val timestamp:Double, val sample: FloatArray) : ServiceEvent()
+        data class DataSample(val streamName: String,val timestamp:Double, val sample: FloatArray) : ServiceEvent() {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as DataSample
+
+                if (streamName != other.streamName) return false
+                if (timestamp != other.timestamp) return false
+                if (!sample.contentEquals(other.sample)) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = streamName.hashCode()
+                result = 31 * result + timestamp.hashCode()
+                result = 31 * result + sample.contentHashCode()
+                return result
+            }
+        }
+
         data class StreamConfig(val streamName:String,val channelCount:Int, val samplingRate : Double) : ServiceEvent()
     }
 
@@ -68,7 +79,7 @@ class LSLService : LifecycleService() {
 
     fun startInlet(streamName : String){
         val info = LSL.resolve_stream("name", streamName).firstOrNull() ?: return
-        val inlet = LSL.StreamInlet(info)
+        val inlet = StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
             Log.i("LSLService","Emitting config for ${info.name()}")
             _dataFlow.emit(
@@ -105,7 +116,7 @@ class LSLService : LifecycleService() {
         inletJobs.remove(streamName)?.stop()
     }
 
-    fun stopAll() {
+    private fun stopAll() {
         inletJobs.values.forEach { it.stop() }
     }
 

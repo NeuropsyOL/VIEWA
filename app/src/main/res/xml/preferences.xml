@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <!--
     <SwitchPreference
         android:defaultValue="false"
         android:key="use_wakelock"
@@ -21,5 +20,5 @@
         android:min="1"
         android:title="Buffer length"
         app:showSeekBarValue="true" />
-        -->
+
 </PreferenceScreen>

@@ -4,8 +4,8 @@ import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
-import de.uol.neuropsy.viewa.LSLService
-import de.uol.neuropsy.viewa.ui.main.utils.ColorPalette
+import de.uol.neuropsy.viewa.service.LSLService
+import de.uol.neuropsy.viewa.utils.ColorPalette
 import edu.ucsd.sccn.LSL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,7 +29,7 @@ data class ChartUiState(
 class LivePlotViewModel : ViewModel() {
 
     private val maxPoints = 500
-    val bufferSizeInSeconds = 10.0
+    private val bufferSizeInSeconds = 10.0
     private var pausePlotting = false
     private var allTimeMin = mutableMapOf<String, Float>()
     private var allTimeMax = mutableMapOf<String, Float>()
@@ -132,6 +132,11 @@ class LivePlotViewModel : ViewModel() {
             toStart.forEach { service?.startInlet(it) }
             activeStreams = newStreams
         }
+    }
+
+    fun resetLimits(name : String) {
+        allTimeMax[name] = Float.NEGATIVE_INFINITY
+        allTimeMin[name] = Float.POSITIVE_INFINITY
     }
 
     override fun onCleared() {

@@ -5,15 +5,11 @@ import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.button.MaterialButton
 import de.uol.neuropsy.viewa.R
 
 class StreamSelectionFragment : DialogFragment(R.layout.fragment_selection) {
@@ -48,7 +44,7 @@ class StreamSelectionFragment : DialogFragment(R.layout.fragment_selection) {
         viewModel.refreshAvailableStreams()
         swipe.isRefreshing=true
 
-        var dialog = AlertDialog.Builder(requireContext())
+        val dialog = AlertDialog.Builder(requireContext())
             .setView(view).setPositiveButton("Apply changes") { _: DialogInterface, _: Int ->
                 val selected = viewModel.selectedStreams.value
                 parentFragmentManager.setFragmentResult(
