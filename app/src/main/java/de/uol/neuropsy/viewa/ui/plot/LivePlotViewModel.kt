@@ -1,5 +1,7 @@
 package de.uol.neuropsy.viewa.ui.plot
-import androidx.lifecycle.ViewModel
+
+import android.util.Log
+import  androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineDataSet
@@ -21,7 +23,7 @@ import kotlin.math.min
 // and the all time max/min values used for axis scaling
 //
 data class ChartUiState(
-    val entries: List<ILineDataSet> = emptyList(),
+    val entries: List<LineDataSet> = emptyList(),
     val yMin: Float = Float.POSITIVE_INFINITY,
     val yMax: Float = Float.NEGATIVE_INFINITY
 )
@@ -46,10 +48,10 @@ class LivePlotViewModel : ViewModel() {
     // LSLService might induce a race condition when whe change
     // new active streams faster than the service can open new
     // outlets, see also updateSelection()
-    var activeStreams : Set<String> = emptySet()
+    var activeStreams: Set<String> = emptySet()
 
 
-    fun bindService(lslservice : LSLService) {
+    fun bindService(lslservice: LSLService) {
         service = lslservice
         if (job == null) {
             job = viewModelScope.launch(Dispatchers.Default) {
@@ -79,35 +81,36 @@ class LivePlotViewModel : ViewModel() {
             buf.removeIf { t -> buf.last().x - t.x > bufferSizeInSeconds }
         }
 
-        // Compute this stream's current min/max
-        val allValues = chBufs.flatMap { it.value.toList() }.map { it.y }
+        // Compute this stream's current min/max over all visible states
+        val allValues = chBufs.filter { (idx, _) ->
+            _uiState.value[name]?.entries?.get(idx)?.isVisible ?: true
+        }.map { (_,v)->v.map { e->e.y } }.flatten()
         val currentMin = allValues.minOrNull() ?: 0f
         val currentMax = allValues.maxOrNull() ?: 0f
-
         allTimeMin[name] = min(allTimeMin[name]!!, currentMin)
         allTimeMax[name] = max(allTimeMax[name]!!, currentMax)
-
         val cp = ColorPalette()
 
-        // 7) Build a ChartUiState for each stream
-        if (!pausePlotting) {
-            val stateMap = buffers.mapValues { (stream, bufMap) ->
-                // create one DataSet per channel
-                val sets = bufMap.map { (i, buf) ->
-                    LineDataSet(buf.toList(), "Ch-$i").apply {
-                        setDrawCircles(false)
-                        lineWidth = 1f
-                        color = cp.nextColor()
-                    }
+        // Build a ChartUiState for each stream this is inefficient because we rebuild the
+        // datasets every time a new sample arrives but only render them @ 60 Hz
+        val stateMap = buffers.mapValues { (stream, bufMap) ->
+            // create one DataSet per channel
+            val sets = bufMap.map { (i, buf) ->
+                LineDataSet(buf.toList(), "Ch-$i").apply {
+                    setDrawCircles(false)
+                    lineWidth = 1f
+                    color = cp.nextColor()
+                    //Copy old visible state to new data set
+                    isVisible= uiState.value[stream]?.entries?.getOrNull(i)?.isVisible ?: true
                 }
-                ChartUiState(
-                    entries = sets,
-                    yMin = allTimeMin[stream]!!,
-                    yMax = allTimeMax[stream]!!
-                )
             }
-            _uiState.value = stateMap
+            ChartUiState(
+                entries = sets,
+                yMin = allTimeMin[stream]!!,
+                yMax = allTimeMax[stream]!!
+            )
         }
+        _uiState.value = stateMap
     }
 
     private fun handleConfigurationEvent(configEvent: LSLService.ServiceEvent.StreamConfig) {
@@ -124,19 +127,23 @@ class LivePlotViewModel : ViewModel() {
 
     fun updateSelection(newStreams: Set<String>) {
         val toStart = newStreams - activeStreams
-        val toStop  = activeStreams - newStreams
+        val toStop = activeStreams - newStreams
         viewModelScope.launch {
             // serialized on the same coroutine context,
             // so no two diffs run in parallel
-            toStop.forEach  { service?.stopInlet(it) }
+            toStop.forEach { service?.stopInlet(it) }
             toStart.forEach { service?.startInlet(it) }
             activeStreams = newStreams
         }
     }
 
-    fun resetLimits(name : String) {
+    fun resetLimits(name: String) {
         allTimeMax[name] = Float.NEGATIVE_INFINITY
         allTimeMin[name] = Float.POSITIVE_INFINITY
+    }
+
+    fun toggleVisible(streamName: String, channelIdx: Int, shouldBeVisible:Boolean){
+        _uiState.value[streamName]?.entries?.get(channelIdx)?.isVisible=shouldBeVisible
     }
 
     override fun onCleared() {

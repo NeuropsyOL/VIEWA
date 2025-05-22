@@ -20,8 +20,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
 import de.uol.neuropsy.viewa.R
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.sample
 
 class FullScreenPlotFragment : Fragment(R.layout.fragment_fullscreen_plot) {
     companion object {
@@ -49,6 +53,7 @@ class FullScreenPlotFragment : Fragment(R.layout.fragment_fullscreen_plot) {
     ): View? = inflater.inflate(R.layout.fragment_fullscreen_plot, container, false)
 
 
+    @OptIn(FlowPreview::class)
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(v: View, savedInstanceState: Bundle?) {
         val chart = v.findViewById<LineChart>(R.id.fullscreenChart)
@@ -60,14 +65,13 @@ class FullScreenPlotFragment : Fragment(R.layout.fragment_fullscreen_plot) {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.uiState
                 .mapNotNull { it[streamName] }
-                .collect { ui ->
-                    val oldState=chart?.data?.dataSets?.map { d->d.isVisible }.orEmpty()
+                .sample(16).collect { ui ->
                     chart.data = LineData(*ui.entries.toTypedArray())
                     chart.data.isHighlightEnabled=false
-                    chart.data.dataSets.zip(oldState).forEach{(ds,checked)->ds.isVisible=checked}
                     chart.axisLeft.axisMaximum = ui.yMax
                     chart.axisLeft.axisMinimum = ui.yMin
                     channelNames=chart.data.dataSetLabels.toList()
+                    chart.notifyDataSetChanged()
                     chart.invalidate()
                 }
         }
@@ -106,8 +110,11 @@ class FullScreenPlotFragment : Fragment(R.layout.fragment_fullscreen_plot) {
                 .setMultiChoiceItems(
                     channelNames.toTypedArray(),checkArray
                 ) { _, which, isChecked ->
-                    chart.data?.dataSets?.get(which)?.isVisible=isChecked
-                }.setPositiveButton("OK"){_:DialogInterface, _: Int->}.create().show()
-            }
+                    viewModel.toggleVisible(streamName,which,isChecked)
+                    //viewModel.resetLimits(streamName)
+                }.setPositiveButton("OK"){_:DialogInterface, _: Int->
+                    viewModel.resetLimits(streamName)
+                }.create().show()
+        }
     }
 }
