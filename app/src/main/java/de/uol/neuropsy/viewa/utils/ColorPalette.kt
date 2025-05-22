@@ -1,6 +1,8 @@
 package de.uol.neuropsy.viewa.utils
 import android.graphics.Color
 import androidx.annotation.ColorInt
+import androidx.core.graphics.toColorInt
+
 /**
  * Simple next-color generator for chart datasets.
  * Uses a five-color palette optimized for mobile screens.
@@ -28,11 +30,16 @@ class ColorPalette(@ColorInt private val palette: IntArray = DEFAULT_PALETTE){
         /** A palette of five Material-style colors. */
         @JvmField
         val DEFAULT_PALETTE: IntArray = intArrayOf(
-            Color.parseColor("#2196F3"), // Blue 500
-            Color.parseColor("#4CAF50"), // Green 500
-            Color.parseColor("#F44336"), // Red 500
-            Color.parseColor("#FF9800"), // Orange 500
-            Color.parseColor("#9C27B0")  // Purple 500
+            "#1f77b4".toColorInt(),
+            "#ff7f0e".toColorInt(),
+            "#2ca02c".toColorInt(),
+            "#d62728".toColorInt(),
+            "#9467bd".toColorInt(),
+            "#8c564b".toColorInt(),
+            "#e377c2".toColorInt(),
+            "#7f7f7f".toColorInt(),
+            "#bcbd22".toColorInt(),
+            "#17becf".toColorInt()
         )
     }
 }
