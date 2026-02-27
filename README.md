@@ -49,6 +49,7 @@ The app is actively developed by the neuropsychology group of [Stefan Debener](h
 
 #### Active Developers
 * **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
+* **Sarah Blum** - [sarah-blum](https://github.com/s4rify)
 
 ## Acknowledgements
 * [liblsl](https://github.com/sccn/liblsl), used under MIT license
