@@ -56,8 +56,9 @@ class StreamListAdapter(
 
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<StreamItem>() {
+            // Use uid — not name — so two outlets sharing the same name are distinct rows
             override fun areItemsTheSame(old: StreamItem, new: StreamItem) =
-                old.name == new.name
+                old.uid == new.uid
             override fun areContentsTheSame(old: StreamItem, new: StreamItem) =
                 old == new
         }
@@ -66,8 +67,12 @@ class StreamListAdapter(
 
 /**
  * Data class representing a single stream in the list.
+ * [uid] is the LSL outlet UID — guaranteed unique per outlet instance — used
+ * as the DiffUtil identity key so that two streams sharing the same name are
+ * still treated as distinct rows.
  */
 data class StreamItem(
+    val uid: String,
     val name: String,
     var isChecked: Boolean,
     val subtitle : String
