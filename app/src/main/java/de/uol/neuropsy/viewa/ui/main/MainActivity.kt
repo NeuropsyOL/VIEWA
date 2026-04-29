@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -22,6 +23,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // Enable edge-to-edge so AppBarLayout can extend behind the status bar
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Both themes use a dark-blue toolbar → white status bar icons in both modes
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = false
         // Find the toolbar
         val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
         // Set it as the support ActionBar

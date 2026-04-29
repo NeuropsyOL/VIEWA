@@ -1,0 +1,14 @@
+<resources>
+    <!-- Dark theme – applied automatically when the OS is in dark mode -->
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Medium blue: bright enough to stand out on a dark background,
+             dark enough for white button/toolbar text to be readable. -->
+        <item name="colorPrimary">#2196F3</item>
+        <item name="colorPrimaryDark">#1565C0</item>
+        <item name="colorAccent">#40C4FF</item>
+        <!-- Deep navy background keeps the blue brand feel in dark mode -->
+        <item name="android:colorBackground">#0D1521</item>
+        <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>
+    </style>
+</resources>
+

@@ -69,6 +69,16 @@ class StreamPlotAdapter(
         )
         binding.streamChart.description=Description().apply {isEnabled=false}
         binding.streamChart.axisRight.isEnabled=false
+        // Pick label colour based on current night-mode setting
+        val nightMask = holder.itemView.context.resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val labelColor = if (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES)
+            0xFFCCCCCC.toInt()   // light grey for dark mode
+        else
+            android.graphics.Color.DKGRAY  // dark grey for light mode
+        binding.streamChart.xAxis.textColor = labelColor
+        binding.streamChart.axisLeft.textColor = labelColor
+        binding.streamChart.legend.textColor = labelColor
         binding.streamChart.apply {
             data = LineData(*dataSets.toTypedArray())
             // Only apply axis limits when we have finite values (guard against initial ±Infinity)

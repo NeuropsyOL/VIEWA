@@ -60,6 +60,17 @@ class FullScreenPlotFragment : Fragment(R.layout.fragment_fullscreen_plot) {
         // chart setup (axes, descr, etc)…
         chart.description.isEnabled = false
         chart.axisRight.isEnabled = false
+        // Resolve label colour from the current theme so it adapts to light/dark mode
+        // Pick label colour based on current night-mode setting
+        val nightMask = requireContext().resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val labelColor = if (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES)
+            0xFFCCCCCC.toInt()   // light grey for dark mode
+        else
+            android.graphics.Color.DKGRAY  // dark grey for light mode
+        chart.xAxis.textColor = labelColor
+        chart.axisLeft.textColor = labelColor
+        chart.legend.textColor = labelColor
         var channelNames : List<String> = emptyList()
         // observe live data updates for this stream
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
