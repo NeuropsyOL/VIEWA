@@ -1,6 +1,7 @@
 package de.uol.neuropsy.viewa.service
 
 import android.content.Intent
+import android.net.wifi.WifiManager
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
@@ -19,6 +20,10 @@ import java.lang.Exception
 class LSLService : LifecycleService() {
 
     private val timeoutMs = 500.0    // half-second
+
+    // Multicast lock: prevents Android's WiFi chip from filtering incoming multicast
+    // UDP packets (stream discovery responses) when WiFi is connected.
+    private var multicastLock: WifiManager.MulticastLock? = null
 
     sealed class ServiceEvent {
         data class DataSample(val streamName: String,val timestamp:Double, val sample: FloatArray) : ServiceEvent() {
@@ -63,8 +68,23 @@ class LSLService : LifecycleService() {
     private val localBinder = LocalBinder()
 
     override fun onBind(intent: Intent): IBinder {
-        super.onBind(intent)    // important for LifecycleService
-        return localBinder      // return your binder here
+        super.onBind(intent)
+        return localBinder
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        val wifiManager = applicationContext.getSystemService(WIFI_SERVICE) as? WifiManager
+        multicastLock = wifiManager?.createMulticastLock("VIEWA_LSL")?.also {
+            it.setReferenceCounted(false)
+            it.acquire()
+        }
+    }
+
+    override fun onDestroy() {
+        multicastLock?.release()
+        multicastLock = null
+        super.onDestroy()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -78,7 +98,13 @@ class LSLService : LifecycleService() {
     }
 
     fun startInlet(streamName : String){
-        val info = LSL.resolve_stream("name", streamName).firstOrNull() ?: return
+        // Resolve with a 5-second timeout. Prefer matching by source_id (unique per device)
+        // so that two sensors with the same name are handled correctly. Fall back to name only.
+        val candidates = LSL.resolve_stream("name", streamName, 1, 5.0)
+        val info = candidates.firstOrNull() ?: run {
+            Log.w("LSLService", "Could not find stream '$streamName' within timeout")
+            return
+        }
         val inlet = StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
             Log.i("LSLService","Emitting config for ${info.name()}")

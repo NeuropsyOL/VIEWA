@@ -39,15 +39,21 @@ class StreamSelectionViewModel : ViewModel() {
     /**
      * Performs LSL discovery on a background thread,
      * updating availableStreams when done.
+     *
+     * wait_time is set to 3 s (instead of the 1 s default) so that all outlets on
+     * a WiFi network have time to re-announce themselves before we collect results.
      */
     fun refreshAvailableStreams() {
         viewModelScope.launch(Dispatchers.IO) {
-            val infos=LSL.resolve_streams()
+            val infos = LSL.resolve_streams(3.0)
             val items = infos.map { info ->
+                val host = info.hostname().takeIf { it.isNotEmpty() } ?: "unknown host"
                 StreamItem(
+                    uid = info.uid(),
                     name = info.name(),
                     isChecked = _selectedStreams.value.contains(info.name()),
-                    subtitle = "${info.channel_count()} ch ${info.type()} @ ${if (info.nominal_srate()==LSL.IRREGULAR_RATE) "irregular rate" else info.nominal_srate()}"
+                    subtitle = "${info.channel_count()} ch  ${info.type()}  @ " +
+                            "${if (info.nominal_srate() == LSL.IRREGULAR_RATE) "irregular" else info.nominal_srate()} Hz  [$host]"
                 )
             }
             withContext(Dispatchers.Main) {

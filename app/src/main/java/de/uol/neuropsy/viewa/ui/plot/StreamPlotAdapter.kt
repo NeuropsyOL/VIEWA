@@ -60,14 +60,41 @@ class StreamPlotAdapter(
         // Set the text of the title TV
         binding.streamTitle.text = streamName
         // Fetch the latest DataSets for this stream
-        val dataSets = viewModel.uiState.value[streamName]?.entries?: emptyList()
+        val dataSets = viewModel.uiState.value[streamName]?.entries ?: emptyList()
+        Log.d("LivePlot", "[Adapter] $streamName  datasets=${dataSets.size}  " +
+            dataSets.mapIndexed { i, ds ->
+                "Ch$i: entries=${ds.entryCount}  visible=${ds.isVisible}  " +
+                "yRange=[${if (ds.entryCount > 0) ds.yMin else Float.NaN}, ${if (ds.entryCount > 0) ds.yMax else Float.NaN}]"
+            }.joinToString(" | ")
+        )
         binding.streamChart.description=Description().apply {isEnabled=false}
         binding.streamChart.axisRight.isEnabled=false
-        // Apply to the chart
+        // Pick label colour based on current night-mode setting
+        val nightMask = holder.itemView.context.resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        val labelColor = if (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES)
+            0xFFCCCCCC.toInt()   // light grey for dark mode
+        else
+            android.graphics.Color.DKGRAY  // dark grey for light mode
+        binding.streamChart.xAxis.textColor = labelColor
+        binding.streamChart.axisLeft.textColor = labelColor
+        binding.streamChart.legend.textColor = labelColor
         binding.streamChart.apply {
             data = LineData(*dataSets.toTypedArray())
-            viewModel.uiState.value[streamName]?.yMax?.let { axisLeft.axisMaximum=it }
-            viewModel.uiState.value[streamName]?.yMin?.let { axisLeft.axisMinimum=it }
+            // Only apply axis limits when we have finite values (guard against initial ±Infinity)
+            val yMin = viewModel.uiState.value[streamName]?.yMin ?: Float.NaN
+            val yMax = viewModel.uiState.value[streamName]?.yMax ?: Float.NaN
+            if (yMin.isFinite() && yMax.isFinite()) {
+                val range = yMax - yMin
+                val padding = if (range > 0f) range * 0.1f else Math.abs(yMax) * 0.1f + 1f
+                axisLeft.axisMaximum = yMax + padding
+                axisLeft.axisMinimum = yMin - padding
+            } else {
+                axisLeft.resetAxisMaximum()
+                axisLeft.resetAxisMinimum()
+            }
+            // Auto-scroll to the latest data so the chart viewport follows incoming samples
+            moveViewToX(data?.xMax ?: 0f)
             notifyDataSetChanged()
             invalidate()
         }

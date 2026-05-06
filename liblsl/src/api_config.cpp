@@ -235,6 +235,16 @@ void api_config::load_from_file(const std::string &filename) {
 
 		// read the [lab] settings
 		known_peers_ = parse_set(pt.get("lab.KnownPeers", "{}"));
+#ifdef __ANDROID__
+		// On Android, always include loopback so that streams on the same device remain
+		// discoverable even when WiFi is disconnected. Without WiFi the multicast/broadcast
+		// paths don't work; the unicast-burst path (resolver_impl::udp_unicast_burst) probes
+		// 127.0.0.1:base_port … base_port+range-1, hitting each outlet's unique time-server
+		// port, which also handles LSL:shortinfo discovery queries.
+		if (std::find(known_peers_.begin(), known_peers_.end(), "127.0.0.1") ==
+				known_peers_.end())
+			known_peers_.push_back("127.0.0.1");
+#endif
 		session_id_ = pt.get("lab.SessionID", "default");
 
 		// read the [tuning] settings
