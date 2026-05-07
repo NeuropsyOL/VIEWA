@@ -43,6 +43,9 @@ google-services.json
 # Android Jetpack Compose
 .metadata/
 
+# Local dev notes
+TODO.txt
+
 # Miscellaneous
 *.swp
 *~.nib

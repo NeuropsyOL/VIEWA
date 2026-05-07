@@ -24,7 +24,7 @@
 
 ### 1. Download the APK
 
-1. Go to the [Viewa Releases page](https://github.com/your-username/Viewa/releases).  
+1. Go to the [Viewa Releases page](https://github.com/NeuropsyOL/VIEWA/releases).  
 2. Under **Assets**, download the latest `Viewa-vX.Y.Z.apk`.  
 3. On your Android device, enable “Install unknown apps” (Settings → Security or Apps → Browser/File Manager).  
 4. Open the downloaded APK and follow the prompts to install.
@@ -33,8 +33,8 @@
 
 1. Clone the repository:  
    ```bash
-   git clone https://github.com/your-username/Viewa.git
-   cd Viewa
+   git clone https://github.com/NeuropsyOL/VIEWA.git
+   cd VIEWA
    ```
    
 2. Open the project in Android Studio (Arctic Fox or newer).
