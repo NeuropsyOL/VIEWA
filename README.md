@@ -53,6 +53,16 @@ The app is actively developed by the neuropsychology group of [Stefan Debener](h
 #### Previous Developers
 * **Paul Maanen** - [pmaanen](https://github.com/pmaanen)
 
+## Citation
+
+If you use Viewa in your research, please cite our paper:
+
+> **[Title will be added upon acceptance]**  
+> Sarah Blum, Paul Maanen, Stefan Debener  
+> *Under review*, 2026.
+
+A BibTeX entry will be provided here once the publication details are finalised.
+
 ## Acknowledgements
 * [liblsl](https://github.com/sccn/liblsl), used under MIT license
 * [liblsl-Java](https://github.com/labstreaminglayer/liblsl-Java), used under MIT license
