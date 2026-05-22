@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'  # Trigger on push to any branch
+    tags:
+      - 'v*'  # Trigger on version tags for releases
   workflow_dispatch:
     inputs:
       force_release:
@@ -18,7 +20,10 @@ on:
 jobs:
   build-debug:
     # Build debug APK for all feature branches --> and not main (skip if manually forcing a release build)
-    if: github.ref_name != 'master' && github.event.inputs.force_release != 'true'
+    if: >
+      !startsWith(github.ref, 'refs/tags/') &&
+      github.ref_name != 'master' &&
+      github.event.inputs.force_release != 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -43,9 +48,14 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
 
   build-release:
-    # Build release APK for main branch, or when manually triggered with force_release=true
-    if: github.ref_name == 'master' || github.event.inputs.force_release == 'true'
+    # Build release APK for main branch, version tags, or when manually triggered with force_release=true
+    if: >
+      github.ref_name == 'master' ||
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event.inputs.force_release == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # required to create GitHub Releases
 
     steps:
       - uses: actions/checkout@v4
@@ -74,8 +84,17 @@ jobs:
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
 
-      - name: Upload release APK
+      - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: VIEWA-release
           path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          generate_release_notes: true
+          name: "Viewa ${{ github.ref_name }}"
+
