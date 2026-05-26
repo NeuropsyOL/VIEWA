@@ -5,7 +5,7 @@
 # VIEWA — Live LSL Data Viewer for Android
 
 <div align="center">
-  <img width="270" src="./docs/Screenshots/viewa_main_screen.png" alt="VIEWA main screen showing live sensor streams">
+  <img width="270" src="./docs/Screenshots/VIEWA_Main.png" alt="VIEWA main screen showing live sensor streams">
 </div>
 
 **VIEWA** turns your Android phone into a live oscilloscope for [Lab Streaming Layer (LSL)](https://github.com/sccn/labstreaminglayer) data.  
