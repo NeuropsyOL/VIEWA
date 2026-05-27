@@ -8,19 +8,33 @@
   <img width="270" src="./docs/Screenshots/VIEWA_Main.png" alt="VIEWA main screen showing live sensor streams">
 </div>
 
-**VIEWA** turns your Android phone into a live oscilloscope for [Lab Streaming Layer (LSL)](https://github.com/sccn/labstreaminglayer) data.  
+> 📋 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+
+---
+
+## Citation
+
+> **If you use VIEWA in your research, please cite the following publication:**
+>
+> Haupt et al. — *Title TBA upon publication* — accepted. Citation will be updated once a DOI is available.
+
+VIEWA is provided **without any warranty**, and without guarantee of fitness for a particular purpose. Use it at your own risk. See [LICENSE](LICENSE) for the full terms.
+
+---
+
+**VIEWA** turns your Android phone into a live oscilloscope for [Lab Streaming Layer (LSL)](https://labstreaminglayer.readthedocs.io/) [[1]](#lsl-ref) data.  
 Discover any LSL stream on your local network and watch all channels scroll in real time — no laptop, no cables, no extra software required.
 
 ---
 
 ## Table of Contents
 
-1. [Why VIEWA?](#why-viewa)
-2. [Features](#features)
-3. [Requirements](#requirements)
-4. [Installation](#installation)
+1. [Citation](#citation)
+2. [Why VIEWA?](#why-viewa)
+3. [Features](#features)
+4. [Getting Started](#getting-started)
 5. [Building from Source](#building-from-source)
-6. [Scientific Use & Citation](#scientific-use--citation)
+6. [Scientific Use Cases & Publications](#scientific-use-cases--publications)
 7. [Contributing](#contributing)
 8. [Authors](#authors)
 9. [License](#license)
@@ -51,25 +65,17 @@ VIEWA pairs naturally with [RECORDA](https://github.com/NeuropsyOL/RECORDA) (our
 
 ---
 
-## Requirements
+## Getting Started
 
-- Android **11** (API 30) or higher
-- The recording device and all streaming devices must be on the **same local network** (same Wi-Fi access point). LSL uses multicast discovery, which does not work across separate network segments.
+Download the [latest release APK](https://github.com/NeuropsyOL/VIEWA/releases/latest) and sideload it onto your Android smartphone or tablet (Android 11 or higher).
 
----
-
-## Installation
-
-### Download the APK (recommended)
-
-1. Go to the [VIEWA Releases page](https://github.com/NeuropsyOL/VIEWA/releases/latest).
-2. Under **Assets**, download the latest `Viewa-vX.Y.Z.apk`.
-3. On your Android device enable **"Install unknown apps"** (Settings → Security or Apps → your browser/file manager).
-4. Open the downloaded APK and follow the on-screen prompts.
+> **Tip:** Make sure the phone running VIEWA and all streaming devices are on the **same local network** (same Wi-Fi access point). LSL uses multicast discovery, which does not work across separate network segments.
 
 ---
 
 ## Building from Source
+
+We recommend installing the pre-built release APK. If you need to build from source:
 
 ### Prerequisites
 
@@ -95,25 +101,25 @@ Or from the command line:
 
 ---
 
-## Scientific Use & Citation
+## Scientific Use Cases & Publications
 
 VIEWA was developed to support mobile neuroscience and biosignal research at the [Neuropsychology Lab of Stefan Debener](https://uol.de/neuropsychologie), University of Oldenburg, Germany.
-
-### Cite As
-
-If you use VIEWA in your research, please cite our paper:
-
-> **[Title will be added upon acceptance]**  
-> Sarah Blum, Paul Maanen, Stefan Debener  
-> *Under review*, 2026.
-
-A full BibTeX entry and DOI will be added here as soon as the paper is published.
-
-### Related Work
 
 The VIEWA / RECORDA / SENDA ecosystem builds on a broader line of mobile neuroscience research from our lab:
 
 - **Blum S, Hölle D, Bleichner MG, Debener S.** Pocketable Labs for Everyone: Synchronized Multi-Sensor Data Streaming and Recording on Smartphones with the Lab Streaming Layer. *Sensors*, 2021; 21(23):8135. https://doi.org/10.3390/s21238135
+
+- **Debener S, Minow F, Emkes R, Gandras K, de Vos M.** How about taking a low-cost, small, and wireless EEG for a walk? *Psychophysiology*, 2012; 49(11):1449–1453. https://doi.org/10.1111/j.1469-8986.2012.01471.x
+
+<!-- 
+  TODO: Add further publications that have used VIEWA for data collection.
+  Example template:
+  - **Author(s).** Title. *Journal*, Year; Vol(Issue):Pages. https://doi.org/...
+-->
+
+### Lab Streaming Layer
+<a name="lsl-ref"></a>
+- **Kothe C, Shirazi SY, Stenner T, Medine D, Boulay C, Grivich MI, Artoni F, Mullen T, Delorme A, Makeig S.** The Lab Streaming Layer for Synchronized Multimodal Recording. *Imaging Neurosci (Camb).* 2025;3:IMAG.a.136. https://doi.org/10.1162/IMAG.a.136
 
 ---
 
