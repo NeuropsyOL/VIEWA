@@ -101,6 +101,12 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot),
                 adapter.notifyDataSetChanged()
             }
         }
+        // Also redraw when marker streams receive new events
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.markerUiState.sample(16).collect { _ ->
+                adapter.notifyDataSetChanged()
+            }
+        }
 
         childFragmentManager.setFragmentResultListener(
             "streamSelection",     // requestKey

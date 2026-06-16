@@ -26,6 +26,14 @@ data class ChartUiState(
     val yMax: Float = Float.NEGATIVE_INFINITY
 )
 
+/** UI state for a marker/event stream: a list of (relativeTimestamp, label) pairs
+ *  within the current time window. */
+data class MarkerUiState(
+    val markers: List<Pair<Float, String>> = emptyList(),
+    val windowStartX: Float = 0f,
+    val latestX: Float = 0f
+)
+
 class LivePlotViewModel : ViewModel() {
 
     private val maxPoints = 500
@@ -41,14 +49,17 @@ class LivePlotViewModel : ViewModel() {
     private val _uiState =
         MutableStateFlow<Map<String, ChartUiState>>(emptyMap())
     val uiState: StateFlow<Map<String, ChartUiState>> = _uiState.asStateFlow()
+
+    // Marker stream support
+    val markerStreams: MutableSet<String> = mutableSetOf()
+    private val markerBuffers = mutableMapOf<String, ArrayDeque<Pair<Float, String>>>()
+
+    private val _markerUiState = MutableStateFlow<Map<String, MarkerUiState>>(emptyMap())
+    val markerUiState: StateFlow<Map<String, MarkerUiState>> = _markerUiState.asStateFlow()
+
     private var service: LSLService? = null
 
     // Set of the names of active streams currently plotted
-    // Unfortunately we need this set of extra bookkeeping as
-    // I think getting the list of the currently active streams from the
-    // LSLService might induce a race condition when whe change
-    // new active streams faster than the service can open new
-    // outlets, see also updateSelection()
     var activeStreams: Set<String> = emptySet()
 
 
@@ -61,9 +72,32 @@ class LivePlotViewModel : ViewModel() {
                         when (ev) {
                             is LSLService.ServiceEvent.StreamConfig -> handleConfigurationEvent(ev)
                             is LSLService.ServiceEvent.DataSample -> handleDataEvent(ev)
+                            is LSLService.ServiceEvent.MarkerSample -> handleMarkerEvent(ev)
                         }
                     }
             }
+        }
+    }
+
+    private fun handleMarkerEvent(ev: LSLService.ServiceEvent.MarkerSample) {
+        val name = ev.streamName
+        val baseline = timestampBaseline.getOrPut(name) { ev.timestamp }
+        val t = (ev.timestamp - baseline).toFloat()
+        val buf = markerBuffers[name] ?: return
+
+        buf.addLast(Pair(t, ev.label))
+        // Remove entries older than the sliding window
+        val windowStart = t - bufferSizeInSeconds.toFloat()
+        while (buf.isNotEmpty() && buf.first().first < windowStart) {
+            buf.removeFirst()
+        }
+
+        _markerUiState.value = _markerUiState.value.toMutableMap().apply {
+            put(name, MarkerUiState(
+                markers = buf.toList(),
+                windowStartX = windowStart,
+                latestX = t
+            ))
         }
     }
 
@@ -121,16 +155,24 @@ class LivePlotViewModel : ViewModel() {
     }
 
     private fun handleConfigurationEvent(configEvent: LSLService.ServiceEvent.StreamConfig) {
-        val channelCount = configEvent.channelCount
         val streamName = configEvent.streamName
-        val bufferSize =
-            if (configEvent.samplingRate == LSL.IRREGULAR_RATE) maxPoints else (bufferSizeInSeconds * configEvent.samplingRate + 1).toInt()
-        buffers[streamName] = (0 until channelCount)
-            .associateWith { ArrayDeque<Entry>(bufferSize) }
-            .toMutableMap()
-        allTimeMin[streamName] = Float.POSITIVE_INFINITY
-        allTimeMax[streamName] = Float.NEGATIVE_INFINITY
         timestampBaseline.remove(streamName)
+
+        if (configEvent.isMarker) {
+            markerStreams.add(streamName)
+            markerBuffers[streamName] = ArrayDeque()
+            _markerUiState.value = _markerUiState.value.toMutableMap().apply {
+                put(streamName, MarkerUiState())
+            }
+        } else {
+            val bufferSize =
+                if (configEvent.samplingRate == LSL.IRREGULAR_RATE) maxPoints else (bufferSizeInSeconds * configEvent.samplingRate + 1).toInt()
+            buffers[streamName] = (0 until configEvent.channelCount)
+                .associateWith { ArrayDeque<Entry>(bufferSize) }
+                .toMutableMap()
+            allTimeMin[streamName] = Float.POSITIVE_INFINITY
+            allTimeMax[streamName] = Float.NEGATIVE_INFINITY
+        }
     }
 
     fun updateSelection(newStreams: Set<String>) {
@@ -139,7 +181,10 @@ class LivePlotViewModel : ViewModel() {
         viewModelScope.launch {
             // serialized on the same coroutine context,
             // so no two diffs run in parallel
-            toStop.forEach { service?.stopInlet(it) }
+            toStop.forEach {
+                service?.stopInlet(it)
+                markerStreams.remove(it)
+            }
             toStart.forEach { service?.startInlet(it) }
             activeStreams = newStreams
         }
