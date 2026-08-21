@@ -21,6 +21,9 @@ class LSLService : LifecycleService() {
 
     private val timeoutMs = 500.0    // half-second
 
+    /** LSL channel-format constant for variable-length strings (mirrors LSL.ChannelFormat.string = 3) */
+    private val LSL_FORMAT_STRING = 3
+
     // Multicast lock: prevents Android's WiFi chip from filtering incoming multicast
     // UDP packets (stream discovery responses) when WiFi is connected.
     private var multicastLock: WifiManager.MulticastLock? = null
@@ -48,7 +51,9 @@ class LSLService : LifecycleService() {
             }
         }
 
-        data class StreamConfig(val streamName:String,val channelCount:Int, val samplingRate : Double) : ServiceEvent()
+        data class StreamConfig(val streamName:String, val channelCount:Int, val samplingRate: Double, val isMarker: Boolean = false) : ServiceEvent()
+
+        data class MarkerSample(val streamName: String, val timestamp: Double, val label: String) : ServiceEvent()
     }
 
     // This SharedFlow handles all data flow from the service to the view model.
@@ -105,28 +110,46 @@ class LSLService : LifecycleService() {
             Log.w("LSLService", "Could not find stream '$streamName' within timeout")
             return
         }
+        val isMarker = info.channel_format() == LSL_FORMAT_STRING
         val inlet = StreamInlet(info)
         val job = lifecycleScope.launch(Dispatchers.IO) {
-            Log.i("LSLService","Emitting config for ${info.name()}")
+            Log.i("LSLService","Emitting config for ${info.name()} (isMarker=$isMarker)")
             _dataFlow.emit(
                 ServiceEvent.StreamConfig(
                     info.name(),
                     info.channel_count(),
-                    info.nominal_srate()
+                    info.nominal_srate(),
+                    isMarker
                 )
             )
-            val buf = FloatArray(info.channel_count())
             try {
-                while (isActive) {
-                    val timestamp = inlet.pull_sample(buf, timeoutMs)
-                    if (timestamp > 0) {
-                        _dataFlow.tryEmit(
-                            ServiceEvent.DataSample(
-                                streamName,
-                                timestamp,
-                                buf.copyOf()
+                if (isMarker) {
+                    val buf = Array(info.channel_count()) { "" }
+                    while (isActive) {
+                        val timestamp = inlet.pull_sample(buf, timeoutMs)
+                        if (timestamp > 0) {
+                            _dataFlow.tryEmit(
+                                ServiceEvent.MarkerSample(
+                                    streamName,
+                                    timestamp,
+                                    buf.firstOrNull() ?: ""
+                                )
                             )
-                        )
+                        }
+                    }
+                } else {
+                    val buf = FloatArray(info.channel_count())
+                    while (isActive) {
+                        val timestamp = inlet.pull_sample(buf, timeoutMs)
+                        if (timestamp > 0) {
+                            _dataFlow.tryEmit(
+                                ServiceEvent.DataSample(
+                                    streamName,
+                                    timestamp,
+                                    buf.copyOf()
+                                )
+                            )
+                        }
                     }
                 }
             } catch (e: Exception){
