@@ -1,8 +1,8 @@
 <resources>
     <!-- Base application theme – forced light so chart axis labels (black) are always readable -->
     <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#0077B6</item>
-        <item name="colorPrimaryDark">#005F92</item>
+        <item name="colorPrimary">#388E3C</item>
+        <item name="colorPrimaryDark">#1B5E20</item>
         <item name="colorAccent">#00B4D8</item>
         <item name="android:colorBackground">#FAFCFF</item>
         <item name="materialButtonStyle">@style/Widget.MaterialComponents.Button</item>

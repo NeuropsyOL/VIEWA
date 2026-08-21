@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- AppBarLayout with fitsSystemWindows="true" extends the blue background
+    <!-- AppBarLayout with fitsSystemWindows="true" extends the green background
          behind the status bar in edge-to-edge mode, so there is no white gap. -->
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
