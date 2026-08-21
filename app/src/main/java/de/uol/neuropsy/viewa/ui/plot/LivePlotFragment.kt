@@ -12,11 +12,9 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.text.Html
 import android.text.method.LinkMovementMethod
-import android.view.GestureDetector
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -33,7 +31,6 @@ import de.uol.neuropsy.viewa.R
 import de.uol.neuropsy.viewa.service.LSLService
 import de.uol.neuropsy.viewa.ui.selection.StreamSelectionFragment
 import de.uol.neuropsy.viewa.ui.settings.SettingsDialog
-import kotlinx.coroutines.flow.sample
 
 
 class LivePlotFragment : Fragment(R.layout.fragment_live_plot),
@@ -90,23 +87,13 @@ class LivePlotFragment : Fragment(R.layout.fragment_live_plot),
         super.onViewCreated(view, savedInstanceState)
         val recycler = view.findViewById<RecyclerView>(R.id.plotsRecycler)
         recycler.layoutManager = LinearLayoutManager(requireContext())
-        adapter = StreamPlotAdapter(viewModel) { name -> onPlotClicked(name) }
+        recycler.itemAnimator = null   // prevent insert animations from blocking chart redraws
+        adapter = StreamPlotAdapter(viewModel, viewLifecycleOwner.lifecycleScope) { name -> onPlotClicked(name) }
         recycler.adapter = adapter
         adapter.submitList(viewModel.activeStreams.toList())
 
-        // When *any* chartData updates, ask the adapter to re-bind visible ViewHolders
-        // Use sample() to throttle to 60 FPS
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.uiState.sample(16).collect { _ ->
-                adapter.notifyDataSetChanged()
-            }
-        }
-        // Also redraw when marker streams receive new events
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.markerUiState.sample(16).collect { _ ->
-                adapter.notifyDataSetChanged()
-            }
-        }
+        // Each ViewHolder now drives its own chart coroutine (started in onViewAttachedToWindow),
+        // so no adapter-level notifyDataSetChanged() loop is needed here.
 
         childFragmentManager.setFragmentResultListener(
             "streamSelection",     // requestKey
